@@ -9,7 +9,9 @@ export default function Navigation({ onNext, currentPage = 0 }) {
   };
 
   const getButtonText = () => {
-    return currentPage === 0 ? "Start" : "Next";
+    if (currentPage === 0) return "Start";
+    if (currentPage === 3) return "Return";
+    return "Next";
   };
 
   return (
@@ -39,7 +41,7 @@ export default function Navigation({ onNext, currentPage = 0 }) {
           fontSize: '60px',
           fontWeight: '600',
           textShadow: '4px 4px 8px rgba(0,0,0,0.8)',
-          fontFamily: '"EB Garamond", serif',
+          fontFamily: '"Newsreader", serif',
           letterSpacing: '3px'
         }}
       >

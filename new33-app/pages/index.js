@@ -4,14 +4,58 @@ import { useEffect, useRef, useState } from "react";
 import { Renderer, PointerHandler } from "../lib/shader";
 import Navigation from "../components/Navigation";
 import AuroraEffect from "../components/AuroraEffect";
+import ColorMixEffect from "../components/ColorMixEffect";
 
 export default function Home() {
   const canvasRef = useRef(null);
-  const [currentPage, setCurrentPage] = useState(0); // 0: main, 1: page1, 2: page2, etc.
+  const [currentPage, setCurrentPage] = useState(0); // 0: main, 1: page1, 2: page2, 3: page3, etc.
   const [selectedOptions, setSelectedOptions] = useState([]);
 
+  // 각 심리 옵션별 색상 정의 (RGB 0-1 범위)
+  const psychologicalColors = {
+    0: [1.0, 0.2, 0.2], // 1. 휴식이 필요하다 → 빨강
+    1: [0.2, 0.4, 1.0], // 2. 위로가 필요하다 → 파랑  
+    2: [1.0, 1.0, 0.2], // 3. 안정이 필요하다 → 노랑
+    3: [0.2, 0.8, 0.2], // 4. 대화가 필요하다 → 초록
+    4: [1.0, 0.4, 0.8], // 5. 기분전환이 필요하다 → 분홍
+    5: [1.0, 0.6, 0.2]  // 6. 도전이 필요하다 → 주황
+  };
+
+  const psychologicalOptions = [
+    "휴식이 필요하다.",
+    "위로가 필요하다.",
+    "안정이 필요하다.",
+    "대화가 필요하다.",
+    "기분전환이 필요하다.",
+    "도전이 필요하다."
+  ];
+
+  // 선택된 옵션들의 색상을 혼합하여 최종 색상 계산
+  const calculateMixedColor = (selectedOptions) => {
+    if (selectedOptions.length === 0) return [0.8, 0.8, 0.8]; // 기본 회색
+    
+    let mixedColor = [0, 0, 0];
+    selectedOptions.forEach(optionIndex => {
+      const color = psychologicalColors[optionIndex];
+      mixedColor[0] += color[0];
+      mixedColor[1] += color[1]; 
+      mixedColor[2] += color[2];
+    });
+    
+    // 평균내기
+    const count = selectedOptions.length;
+    return [
+      mixedColor[0] / count,
+      mixedColor[1] / count,
+      mixedColor[2] / count
+    ];
+  };
+
+  // 현재 선택된 색상 계산
+  const currentMixedColor = calculateMixedColor(selectedOptions);
+
   useEffect(() => {
-    if (typeof window !== 'undefined' && canvasRef.current && currentPage === 0) {
+    if (typeof window !== 'undefined' && canvasRef.current && (currentPage === 0 || currentPage === 1)) {
       const canvas = canvasRef.current;
       let resolution = 0.5;
       let dpr = Math.max(1, resolution * window.devicePixelRatio);
@@ -139,7 +183,12 @@ void main() {
   }, [currentPage]);
 
   const handleNext = () => {
-    setCurrentPage(currentPage + 1);
+    if (currentPage === 3) {
+      setCurrentPage(0); // Return to main page
+      setSelectedOptions([]); // Reset selections
+    } else {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   const handleOptionClick = (optionIndex) => {
@@ -161,15 +210,6 @@ void main() {
     if (currentPage === 0) return "/메인.png";
     return "/페이지.png";
   };
-
-  const psychologicalOptions = [
-    "휴식이 필요하다.",
-    "위로가 필요하다.",
-    "안정이 필요하다.",
-    "대화가 필요하다.",
-    "기분전환이 필요하다.",
-    "도전이 필요하다."
-  ];
 
   return (
     <>
@@ -218,8 +258,11 @@ void main() {
       {/* Aurora Effect for Page 2 (third page) */}
       {currentPage === 2 && <AuroraEffect />}
 
-      {/* Shader Overlay - only show on main page */}
-      {currentPage === 0 && (
+      {/* Color Mix Effect for Page 3 (fourth page) */}
+      {currentPage === 3 && <ColorMixEffect selectedColor={currentMixedColor} />}
+
+      {/* Shader Overlay - show on main page and second page with different opacity */}
+      {(currentPage === 0 || currentPage === 1) && (
         <canvas
           ref={canvasRef}
           style={{
@@ -230,7 +273,8 @@ void main() {
             height: '100vh',
             pointerEvents: 'auto',
             mixBlendMode: 'screen',
-            zIndex: 1
+            zIndex: 1,
+            opacity: currentPage === 0 ? 1 : 0.3
           }}
         />
       )}
@@ -242,57 +286,7 @@ void main() {
           zIndex: 2,
           padding: 'clamp(1.7411rem, 1.3216rem + 2.0978vw, 2.9473rem)',
           paddingTop: 'clamp(3rem, 2rem + 4vw, 6rem)',
-          fontFamily: '"EB Garamond", serif',
-          fontSize: 'clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem)',
-          lineHeight: '1.4',
-          color: 'rgba(255, 255, 255, 0.9)',
-          maxWidth: '100vw',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start'
-        }}>
-          <h1 style={{
-            fontSize: 'clamp(2rem, 1.3914rem + 3.043vw, 3.7497rem)',
-            fontWeight: 'normal',
-            color: 'rgba(255, 255, 255, 0.7)',
-            marginBottom: '2rem',
-            textWrap: 'balance'
-          }}>
-            <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>VAYA</em>, your <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>scent</em>
-          </h1>
-          
-          <div style={{
-            maxWidth: '34em',
-            marginBottom: '3rem'
-          }}>
-            <p style={{ marginBottom: '1.5rem' }}>
-              VAYA is a living incense that listens to your unconscious and offers words of comfort. Born and existing solely to soothe you, each VAYA lives, breathes, and eventually dies for that purpose. Through a deep connection with your inner self, VAYA creates a unique scent and color that reflect your soul. When your life comes to an end, the fragrance left behind by VAYA remains in the world—offering comfort to your loved ones and keeping your memory alive.
-            </p>
-            <p style={{ marginBottom: '3rem', fontSize: '1.1em', fontStyle: 'italic' }}>
-              Create your own scent with VAYA.
-            </p>
-            
-            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '2rem' }}>
-              <p style={{ marginBottom: '1.5rem' }}>
-                VAYA는 당신의 무의식을 분석하여 위로의 말을 건네는 생명을 가진 인센스입니다. 이들은 당신을 위로하기 위해 탄생하고 살아가며 죽습니다. VAYA는 생명을 바쳐 들여다본 당신의 무의식을 통해 당신만의 향기와 색을 창조합니다. 이렇게 만들어진 향은 당신의 생명이 다하는 순간, 당신 대신 이 세상에 남겨져 소중한 사람들을 위로하고 당신을 기억하게 합니다.
-              </p>
-              <p style={{ fontSize: '1.1em', fontStyle: 'italic' }}>
-                VAYA와 함께 당신만의 향을 만들어보세요.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Content for Page 2 */}
-      {currentPage === 2 && (
-        <div style={{
-          position: 'relative',
-          zIndex: 2,
-          padding: 'clamp(1.7411rem, 1.3216rem + 2.0978vw, 2.9473rem)',
-          paddingTop: 'clamp(3rem, 2rem + 4vw, 6rem)',
-          fontFamily: '"EB Garamond", serif',
+          fontFamily: '"Newsreader", "Gowun Batang", serif',
           fontSize: 'clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem)',
           lineHeight: '1.4',
           color: 'rgba(255, 255, 255, 0.9)',
@@ -308,9 +302,9 @@ void main() {
             color: 'rgba(255, 255, 255, 0.7)',
             marginBottom: '2rem',
             textWrap: 'balance',
-            lineHeight: '1.2'
+            fontFamily: '"Newsreader", serif'
           }}>
-            What are your <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>psychological</em> results?
+            <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>VAYA</em>, your <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>scent</em>
           </h1>
           
           <div style={{
@@ -318,31 +312,118 @@ void main() {
             marginBottom: '3rem'
           }}>
             <p style={{ 
-              marginBottom: '4rem',
-              textWrap: 'pretty',
-              lineHeight: '1.6'
+              marginBottom: '1.5rem',
+              fontFamily: '"Newsreader", serif'
             }}>
-              책자를 통해 파악한 당신의 무의식은 무엇이었나요?<br />
-              해당하는 것을 모두 고르고 당신만의 향을 조색하세요.
+              VAYA is a living incense that listens to your unconscious and offers words of comfort. Born and existing solely to soothe you, each VAYA lives, breathes, and eventually dies for that purpose. Through a deep connection with your inner self, VAYA creates a unique scent and color that reflect your soul. When your life comes to an end, the fragrance left behind by VAYA remains in the world—offering comfort to your loved ones and keeping your memory alive.
+            </p>
+            <p style={{ 
+              marginBottom: '3rem', 
+              fontSize: '1.1em', 
+              fontStyle: 'italic',
+              fontFamily: '"Newsreader", serif'
+            }}>
+              Create your own scent with VAYA.
             </p>
             
-            <div style={{ marginTop: '4rem' }}>
+            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '2rem' }}>
+              <p style={{ 
+                marginBottom: '1.5rem',
+                fontFamily: '"Gowun Batang", serif'
+              }}>
+                VAYA는 당신의 무의식을 분석하여 위로의 말을 건네는 생명을 가진 인센스입니다. 이들은 당신을 위로하기 위해 탄생하고 살아가며 죽습니다. VAYA는 생명을 바쳐 들여다본 당신의 무의식을 통해 당신만의 향기와 색을 창조합니다. 이렇게 만들어진 향은 당신의 생명이 다하는 순간, 당신 대신 이 세상에 남겨져 소중한 사람들을 위로하고 당신을 기억하게 합니다.
+              </p>
+              <p style={{ 
+                fontSize: '1.1em', 
+                fontStyle: 'italic',
+                fontFamily: '"Gowun Batang", serif'
+              }}>
+                VAYA와 함께 당신만의 향을 만들어보세요.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content for Page 2 */}
+      {currentPage === 2 && (
+        <div style={{
+          position: 'relative',
+          zIndex: 2,
+          padding: 'clamp(1.7411rem, 1.3216rem + 2.0978vw, 2.9473rem)',
+          paddingTop: 'clamp(3rem, 2rem + 4vw, 6rem)',
+          fontFamily: '"Newsreader", "Gowun Batang", serif',
+          fontSize: 'clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem)',
+          lineHeight: '1.4',
+          color: 'rgba(255, 255, 255, 0.9)',
+          maxWidth: '100vw',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start'
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '6rem',
+            alignItems: 'start',
+            width: '100%',
+            maxWidth: '1400px'
+          }}>
+            {/* Left Side - Title and Description */}
+            <div>
+              <h1 style={{
+                fontSize: 'clamp(2rem, 1.3914rem + 3.043vw, 3.7497rem)',
+                fontWeight: 'normal',
+                color: 'rgba(255, 255, 255, 0.7)',
+                marginBottom: '2rem',
+                textWrap: 'balance',
+                lineHeight: '1.2',
+                fontFamily: '"Newsreader", serif'
+              }}>
+                What are your<br />
+                <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>psychological</em> results?
+              </h1>
+              
+              <p style={{ 
+                marginBottom: '4rem',
+                textWrap: 'pretty',
+                lineHeight: '1.6',
+                fontFamily: '"Gowun Batang", serif',
+                maxWidth: '25em'
+              }}>
+                책자를 통해 파악한 당신의 무의식은 무엇이었나요?<br />
+                해당하는 것을 모두 고르고 당신만의 향을 조색하세요.
+              </p>
+            </div>
+
+            {/* Right Side - Selection Options */}
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.2rem',
+              paddingTop: '12rem',
+              marginLeft: '-6rem',
+              justifySelf: 'start'
+            }}>
               {psychologicalOptions.map((option, index) => (
                 <div 
                   key={index}
                   onClick={() => handleOptionClick(index)}
                   style={{
-                    padding: '1.2rem',
-                    marginBottom: '1.2rem',
+                    padding: '1.8rem 2rem',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    borderLeft: selectedOptions.includes(index) ? '4px solid rgba(255, 255, 255, 0.9)' : '4px solid transparent',
+                    borderLeft: selectedOptions.includes(index) ? '8px solid rgba(255, 255, 255, 0.9)' : '8px solid transparent',
                     opacity: selectedOptions.length > 0 && !selectedOptions.includes(index) ? 0.4 : 1,
                     fontWeight: selectedOptions.includes(index) ? '700' : '400',
                     color: selectedOptions.includes(index) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.9)',
                     fontSize: 'clamp(1.1rem, 1rem + 0.3vw, 1.3rem)',
                     backgroundColor: selectedOptions.includes(index) ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-                    borderRadius: '4px'
+                    borderRadius: '4px',
+                    fontFamily: '"Gowun Batang", serif',
+                    minWidth: '35rem',
+                    width: '35rem'
                   }}
                   onMouseEnter={(e) => {
                     if (selectedOptions.length === 0) {
@@ -369,6 +450,90 @@ void main() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content for Page 3 - Color Result */}
+      {currentPage === 3 && (
+        <div style={{
+          position: 'relative',
+          zIndex: 2,
+          padding: 'clamp(1.7411rem, 1.3216rem + 2.0978vw, 2.9473rem)',
+          paddingTop: 'clamp(3rem, 2rem + 4vw, 6rem)',
+          fontFamily: '"Newsreader", "Gowun Batang", serif',
+          fontSize: 'clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem)',
+          lineHeight: '1.4',
+          color: 'rgba(255, 255, 255, 0.9)',
+          maxWidth: '100vw',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start'
+        }}>
+          <h1 style={{
+            fontSize: 'clamp(2rem, 1.3914rem + 3.043vw, 3.7497rem)',
+            fontWeight: 'normal',
+            color: 'rgba(255, 255, 255, 0.7)',
+            marginBottom: '2rem',
+            textWrap: 'balance',
+            lineHeight: '1.2',
+            fontFamily: '"Newsreader", serif'
+          }}>
+            Your <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>personal</em> scent
+          </h1>
+          
+          <div style={{
+            maxWidth: '34em',
+            marginBottom: '3rem'
+          }}>
+            <p style={{ 
+              marginBottom: '2rem',
+              textWrap: 'pretty',
+              lineHeight: '1.6',
+              fontFamily: '"Newsreader", serif'
+            }}>
+              Based on your psychological results, VAYA has created a unique scent that reflects your inner self.
+            </p>
+            
+            {selectedOptions.length > 0 && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h3 style={{ 
+                  fontSize: '1.2em', 
+                  marginBottom: '1rem',
+                  fontFamily: '"Gowun Batang", serif',
+                  color: 'rgba(255, 255, 255, 0.8)'
+                }}>
+                  당신이 선택한 감정들:
+                </h3>
+                <ul style={{ 
+                  listStyle: 'none', 
+                  padding: 0,
+                  fontFamily: '"Gowun Batang", serif'
+                }}>
+                  {selectedOptions.map(optionIndex => (
+                    <li key={optionIndex} style={{
+                      marginBottom: '0.5rem',
+                      padding: '0.5rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '4px',
+                      borderLeft: `4px solid rgb(${Math.round(psychologicalColors[optionIndex][0] * 255)}, ${Math.round(psychologicalColors[optionIndex][1] * 255)}, ${Math.round(psychologicalColors[optionIndex][2] * 255)})`
+                    }}>
+                      {optionIndex + 1}. {psychologicalOptions[optionIndex]}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <p style={{ 
+              fontSize: '1.1em', 
+              fontStyle: 'italic',
+              fontFamily: '"Newsreader", serif',
+              color: 'rgba(255, 255, 255, 0.8)'
+            }}>
+              Watch as your emotions blend into a beautiful, living fragrance that is uniquely yours.
+            </p>
           </div>
         </div>
       )}
