@@ -3,10 +3,12 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Renderer, PointerHandler } from "../lib/shader";
 import Navigation from "../components/Navigation";
+import AuroraEffect from "../components/AuroraEffect";
 
 export default function Home() {
   const canvasRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0); // 0: main, 1: page1, 2: page2, etc.
+  const [selectedOptions, setSelectedOptions] = useState([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && canvasRef.current && currentPage === 0) {
@@ -140,6 +142,16 @@ void main() {
     setCurrentPage(currentPage + 1);
   };
 
+  const handleOptionClick = (optionIndex) => {
+    setSelectedOptions(prev => {
+      if (prev.includes(optionIndex)) {
+        return prev.filter(index => index !== optionIndex);
+      } else {
+        return [...prev, optionIndex];
+      }
+    });
+  };
+
   const getPageTitle = () => {
     if (currentPage === 0) return "메인 페이지";
     return `페이지 ${currentPage}`;
@@ -149,6 +161,15 @@ void main() {
     if (currentPage === 0) return "/메인.png";
     return "/페이지.png";
   };
+
+  const psychologicalOptions = [
+    "휴식이 필요하다.",
+    "위로가 필요하다.",
+    "안정이 필요하다.",
+    "대화가 필요하다.",
+    "기분전환이 필요하다.",
+    "도전이 필요하다."
+  ];
 
   return (
     <>
@@ -180,6 +201,22 @@ void main() {
           priority
         />
       </div>
+
+      {/* Dark Overlay for non-main pages */}
+      {currentPage > 0 && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 0
+        }} />
+      )}
+
+      {/* Aurora Effect for Page 2 (third page) */}
+      {currentPage === 2 && <AuroraEffect />}
 
       {/* Shader Overlay - only show on main page */}
       {currentPage === 0 && (
@@ -243,6 +280,94 @@ void main() {
               <p style={{ fontSize: '1.1em', fontStyle: 'italic' }}>
                 VAYA와 함께 당신만의 향을 만들어보세요.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content for Page 2 */}
+      {currentPage === 2 && (
+        <div style={{
+          position: 'relative',
+          zIndex: 2,
+          padding: 'clamp(1.7411rem, 1.3216rem + 2.0978vw, 2.9473rem)',
+          paddingTop: 'clamp(3rem, 2rem + 4vw, 6rem)',
+          fontFamily: '"EB Garamond", serif',
+          fontSize: 'clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem)',
+          lineHeight: '1.4',
+          color: 'rgba(255, 255, 255, 0.9)',
+          maxWidth: '100vw',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start'
+        }}>
+          <h1 style={{
+            fontSize: 'clamp(2rem, 1.3914rem + 3.043vw, 3.7497rem)',
+            fontWeight: 'normal',
+            color: 'rgba(255, 255, 255, 0.7)',
+            marginBottom: '2rem',
+            textWrap: 'balance',
+            lineHeight: '1.2'
+          }}>
+            What are your <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>psychological</em> results?
+          </h1>
+          
+          <div style={{
+            maxWidth: '34em',
+            marginBottom: '3rem'
+          }}>
+            <p style={{ 
+              marginBottom: '4rem',
+              textWrap: 'pretty',
+              lineHeight: '1.6'
+            }}>
+              책자를 통해 파악한 당신의 무의식은 무엇이었나요?<br />
+              해당하는 것을 모두 고르고 당신만의 향을 조색하세요.
+            </p>
+            
+            <div style={{ marginTop: '4rem' }}>
+              {psychologicalOptions.map((option, index) => (
+                <div 
+                  key={index}
+                  onClick={() => handleOptionClick(index)}
+                  style={{
+                    padding: '1.2rem',
+                    marginBottom: '1.2rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    borderLeft: selectedOptions.includes(index) ? '4px solid rgba(255, 255, 255, 0.9)' : '4px solid transparent',
+                    opacity: selectedOptions.length > 0 && !selectedOptions.includes(index) ? 0.4 : 1,
+                    fontWeight: selectedOptions.includes(index) ? '700' : '400',
+                    color: selectedOptions.includes(index) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.9)',
+                    fontSize: 'clamp(1.1rem, 1rem + 0.3vw, 1.3rem)',
+                    backgroundColor: selectedOptions.includes(index) ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+                    borderRadius: '4px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedOptions.length === 0) {
+                      // 아직 선택한 것이 없을 때
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 1)';
+                    } else if (!selectedOptions.includes(index)) {
+                      // 다른 것을 선택했지만 이것은 선택되지 않았을 때
+                      e.currentTarget.style.opacity = '0.7';
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedOptions.length === 0) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
+                    } else if (!selectedOptions.includes(index)) {
+                      e.currentTarget.style.opacity = '0.4';
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  {index + 1}. {option}
+                </div>
+              ))}
             </div>
           </div>
         </div>
