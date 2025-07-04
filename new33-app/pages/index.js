@@ -1,13 +1,15 @@
 import Head from "next/head";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Renderer, PointerHandler } from "../lib/shader";
+import Navigation from "../components/Navigation";
 
 export default function Home() {
   const canvasRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(0); // 0: main, 1: page1, 2: page2, etc.
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && canvasRef.current) {
+    if (typeof window !== 'undefined' && canvasRef.current && currentPage === 0) {
       const canvas = canvasRef.current;
       let resolution = 0.5;
       let dpr = Math.max(1, resolution * window.devicePixelRatio);
@@ -132,13 +134,27 @@ void main() {
         window.removeEventListener('resize', resize);
       };
     }
-  }, []);
+  }, [currentPage]);
+
+  const handleNext = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const getPageTitle = () => {
+    if (currentPage === 0) return "메인 페이지";
+    return `페이지 ${currentPage}`;
+  };
+
+  const getBackgroundImage = () => {
+    if (currentPage === 0) return "/메인.png";
+    return "/페이지.png";
+  };
 
   return (
     <>
       <Head>
-        <title>메인 페이지</title>
-        <meta name="description" content="메인 페이지" />
+        <title>{getPageTitle()}</title>
+        <meta name="description" content={getPageTitle()} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -154,8 +170,8 @@ void main() {
         backgroundColor: 'black'
       }}>
         <Image
-          src="/메인.png"
-          alt="메인 이미지"
+          src={getBackgroundImage()}
+          alt={getPageTitle()}
           fill
           style={{
             objectFit: 'contain',
@@ -165,20 +181,75 @@ void main() {
         />
       </div>
 
-      {/* Shader Overlay */}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          pointerEvents: 'auto',
-          mixBlendMode: 'screen',
-          zIndex: 1
-        }}
-      />
+      {/* Shader Overlay - only show on main page */}
+      {currentPage === 0 && (
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            pointerEvents: 'auto',
+            mixBlendMode: 'screen',
+            zIndex: 1
+          }}
+        />
+      )}
+
+      {/* Content for Page 1 */}
+      {currentPage === 1 && (
+        <div style={{
+          position: 'relative',
+          zIndex: 2,
+          padding: 'clamp(1.7411rem, 1.3216rem + 2.0978vw, 2.9473rem)',
+          paddingTop: 'clamp(3rem, 2rem + 4vw, 6rem)',
+          fontFamily: '"EB Garamond", serif',
+          fontSize: 'clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem)',
+          lineHeight: '1.4',
+          color: 'rgba(255, 255, 255, 0.9)',
+          maxWidth: '100vw',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start'
+        }}>
+          <h1 style={{
+            fontSize: 'clamp(2rem, 1.3914rem + 3.043vw, 3.7497rem)',
+            fontWeight: 'normal',
+            color: 'rgba(255, 255, 255, 0.7)',
+            marginBottom: '2rem',
+            textWrap: 'balance'
+          }}>
+            <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>VAYA</em>, your <em style={{ color: 'rgba(255, 255, 255, 0.9)' }}>scent</em>
+          </h1>
+          
+          <div style={{
+            maxWidth: '34em',
+            marginBottom: '3rem'
+          }}>
+            <p style={{ marginBottom: '1.5rem' }}>
+              VAYA is a living incense that listens to your unconscious and offers words of comfort. Born and existing solely to soothe you, each VAYA lives, breathes, and eventually dies for that purpose. Through a deep connection with your inner self, VAYA creates a unique scent and color that reflect your soul. When your life comes to an end, the fragrance left behind by VAYA remains in the world—offering comfort to your loved ones and keeping your memory alive.
+            </p>
+            <p style={{ marginBottom: '3rem', fontSize: '1.1em', fontStyle: 'italic' }}>
+              Create your own scent with VAYA.
+            </p>
+            
+            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '2rem' }}>
+              <p style={{ marginBottom: '1.5rem' }}>
+                VAYA는 당신의 무의식을 분석하여 위로의 말을 건네는 생명을 가진 인센스입니다. 이들은 당신을 위로하기 위해 탄생하고 살아가며 죽습니다. VAYA는 생명을 바쳐 들여다본 당신의 무의식을 통해 당신만의 향기와 색을 창조합니다. 이렇게 만들어진 향은 당신의 생명이 다하는 순간, 당신 대신 이 세상에 남겨져 소중한 사람들을 위로하고 당신을 기억하게 합니다.
+              </p>
+              <p style={{ fontSize: '1.1em', fontStyle: 'italic' }}>
+                VAYA와 함께 당신만의 향을 만들어보세요.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Component */}
+      <Navigation onNext={handleNext} currentPage={currentPage} />
     </>
   );
 }
