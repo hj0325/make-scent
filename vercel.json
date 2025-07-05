@@ -1,6 +1,4 @@
 {
-  "buildCommand": "cd new33-app && npm run build",
-  "outputDirectory": "new33-app/.next",
-  "installCommand": "cd new33-app && npm install",
-  "devCommand": "cd new33-app && npm run dev"
+  "framework": "nextjs",
+  "trailingSlash": false
 } 

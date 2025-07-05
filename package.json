@@ -1,14 +1,16 @@
 {
-  "name": "new33-root",
-  "version": "1.0.0",
+  "name": "new33-app",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cd new33-app && yarn dev",
-    "build": "cd new33-app && yarn build",
-    "start": "cd new33-app && yarn start",
-    "install": "cd new33-app && yarn install"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "description": "VAYA - Interactive scent creation experience",
-  "author": "",
-  "license": "ISC"
-} 
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "next": "15.3.5"
+  }
+}
