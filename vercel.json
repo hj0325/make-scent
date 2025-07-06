@@ -1,4 +1,24 @@
 {
-  "framework": "nextjs",
-  "trailingSlash": false
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": ".next"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "functions": {
+    "pages/api/hello.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "buildCommand": "next build"
 } 
